@@ -1,0 +1,28 @@
+frontend:
+  image:
+    repository: aspecta-demo-frontend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 8080
+
+backend:
+  image:
+    repository: aspecta-demo-backend
+    tag: latest
+    pullPolicy: IfNotPresent
+  replicas: 1
+  port: 5000
+
+config:
+  environment: demo
+  message: "Hello from Aspecta Demo running in Kubernetes!"
+
+secret:
+  demoToken: "change-me"
+
+ingress:
+  enabled: true
+  className: nginx
+  host: aspecta-demo.local
+
