@@ -144,6 +144,54 @@ From another terminal:
 curl.exe -H "Host: aspecta-demo.local" http://localhost:8082
 ```
 
+## Test RBAC
+
+Confirm that the RBAC resources exist:
+
+```powershell
+kubectl get serviceaccount,role,rolebinding --namespace aspecta-demo
+```
+
+The `aspecta-demo-viewers` group has read-only access to pods, Services and ConfigMaps:
+
+```powershell
+kubectl auth can-i list pods --namespace aspecta-demo --as=demo-user --as-group=aspecta-demo-viewers
+kubectl auth can-i get services --namespace aspecta-demo --as=demo-user --as-group=aspecta-demo-viewers
+kubectl auth can-i get configmaps --namespace aspecta-demo --as=demo-user --as-group=aspecta-demo-viewers
+```
+
+All three commands should return `yes`. The group cannot read Secrets or modify resources:
+
+```powershell
+kubectl auth can-i get secrets --namespace aspecta-demo --as=demo-user --as-group=aspecta-demo-viewers
+kubectl auth can-i create pods --namespace aspecta-demo --as=demo-user --as-group=aspecta-demo-viewers
+kubectl auth can-i delete services --namespace aspecta-demo --as=demo-user --as-group=aspecta-demo-viewers
+```
+
+These commands should return `no`.
+
+The application ServiceAccounts have no Kubernetes API permissions:
+
+```powershell
+kubectl auth can-i list pods --namespace aspecta-demo --as=system:serviceaccount:aspecta-demo:aspecta-demo-backend
+kubectl auth can-i list pods --namespace aspecta-demo --as=system:serviceaccount:aspecta-demo:aspecta-demo-frontend
+```
+
+Both commands should return `no`. Confirm that the pods use the dedicated ServiceAccounts:
+
+```powershell
+kubectl get pods --namespace aspecta-demo -o custom-columns="POD:.metadata.name,SERVICE_ACCOUNT:.spec.serviceAccountName"
+```
+
+Confirm that ServiceAccount token mounting is disabled:
+
+```powershell
+kubectl get serviceaccount aspecta-demo-backend --namespace aspecta-demo -o jsonpath="{.automountServiceAccountToken}"
+kubectl get serviceaccount aspecta-demo-frontend --namespace aspecta-demo -o jsonpath="{.automountServiceAccountToken}"
+```
+
+Both commands should return `false`.
+
 ## Cleanup
 
 ```powershell
